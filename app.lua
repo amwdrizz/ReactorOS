@@ -3,16 +3,9 @@ require "Reactor"
 -- This sets up the reactor class and initializes the connection
 R = Reactor:New(nil)
 
--- TODO: Add main loop, logic to balance power requirements to power generation, redstone support for scram, etc.
-local previousPowerStoreLevel = 0
 R:PowerOn()
 
 while true do
-    -- local evt = os.pullEventRaw("terminate")
-    -- if(evt == "terminate") then
-    --     R:Scram()
-    --     return
-    -- end
     term:clear()
     local powerStats = R:GetEnergyStats()
     -- powerStats should be a table containing the following values
@@ -20,9 +13,8 @@ while true do
     
     -- Get current control rod status
     local controlRods = R:GetAllControlRods()
-
-    -- Compare to see if we are gaining or loosing power
-    if(powerStats.energyStored > previousPowerStoreLevel) then
+    
+    if(powerStats.energyStored > (powerStats.energyCapacity / .65)) then
         -- Gaining Power, increase rod insertion by 2% on all rods
         for k,v in ipairs(controlRods) do
             print("Updating Rod: " .. k)
@@ -39,7 +31,7 @@ while true do
                 print("New Insertion %: " .. (v.InsertionLevel + 2))
             end
         end
-    elseif(powerStats.energyStored < previousPowerStoreLevel) then
+    elseif (powerStats.energyStored < (powerStats.energyCapacity / .35)) then
         -- Loosing power, reduce control rods to increase supply to meet demand
         for k,v in ipairs(controlRods) do
             print("Updating Rod: " .. v.RodId)
@@ -56,7 +48,5 @@ while true do
             end
         end
     end
-    -- lastly update previousPowerStoreLevel
-    previousPowerStoreLevel = powerStats.energyStored
-    sleep(1)
+    sleep(5)
 end
