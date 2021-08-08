@@ -2,8 +2,21 @@ require "Reactor"
 
 -- This sets up the reactor class and initializes the connection
 R = Reactor:New(nil)
-
 R:PowerOn()
+
+-- local monitor = peripheral.find("monitor")
+-- monitor.clear()
+-- monitor.setTextScale(.5)
+-- monitor.setCursorPos(1,1)
+-- monitor.write("ReactorOS v1.1")
+-- monitor.setCursorPos(1,2)
+-- monitor.write("Created by AMWDrizz")
+-- monitor.setCursorPos(1,4)
+-- monitor.write("Reactor Status: ")
+-- monitor.setTextColor(8192)
+-- monitor.write("Online")
+-- monitor.setTextColor(1)
+-- monitor.setCursorPos(1,5)
 
 while true do
     term:clear()
@@ -11,42 +24,31 @@ while true do
     -- powerStats should be a table containing the following values
     -- energyStored, energyCapacity, energyProducedLastTick, energySystem
     
-    -- Get current control rod status
-    local controlRods = R:GetAllControlRods()
-    
-    if(powerStats.energyStored > (powerStats.energyCapacity / .65)) then
-        -- Gaining Power, increase rod insertion by 2% on all rods
-        for k,v in ipairs(controlRods) do
-            print("Updating Rod: " .. k)
-            print("Current Insertion %: " .. v.InsertionLevel)
-            if(v.InsertionLevel >= 96 and v.InsertionLevel < 100) then
-                -- we can only go up by 1
-                R:SetControlRod(v.RodId, v.InsertionLevel + 1)
-                print("New Insertion %: " .. (v.InsertionLevel + 1))
-            elseif (v.InsertionLevel == 100) then
-                -- Reactor is offline, no demand on grid
-                R:SetControlRod(v.RodId, 100)
-            else
-                R:SetControlRod(v.RodId, v.InsertionLevel + 2)
-                print("New Insertion %: " .. (v.InsertionLevel + 2))
-            end
-        end
-    elseif (powerStats.energyStored < (powerStats.energyCapacity / .35)) then
-        -- Loosing power, reduce control rods to increase supply to meet demand
-        for k,v in ipairs(controlRods) do
-            print("Updating Rod: " .. v.RodId)
-            print("Current Insertion %: " .. v.InsertionLevel)
-            if(v.InsertionLevel <= 4 and v.InsertionLevel > 0) then
-                -- we are almost fully extracted...  Go by 1%
-                R:SetControlRod(v.RodId, v.InsertionLevel - 1)
-                print("New Insertion %: " .. (v.InsertionLevel - 1))
-            elseif(v.InsertionLevel == 0) then
-                R:SetControlRod(v.RodId,0)
-            else
-                R:SetControlRod(v.RodId, v.InsertionLevel - 2)
-                print("New Insertion %: " .. (v.InsertionLevel - 2))
-            end
-        end
+    local maxStorage = powerStats.energyCapacity * .65
+    local minStorage = powerStats.energyCapacity * .35
+    -- monitor.setCursorPos(1,5)
+    -- monitor.clearLine()
+    -- monitor.write("Min Storage Level: " .. minStorage)
+    -- monitor.setCursorPos(1,6)
+    -- monitor.clearLine()
+    -- monitor.write("Max Storage Level: " .. maxStorage)
+
+    print("Min Storage Level: " .. minStorage)
+    print("Max Storage Level: " .. maxStorage)
+
+    print("Current Energy Stored: " .. powerStats.energyStored)
+    if(powerStats.energyStored > maxStorage) then
+        R:SetAllControlRods(100)
+        -- monitor.setCursorPos(16,4)
+        -- monitor.setTextColor(16)
+        -- monitor.write("Standby Mode")
+        -- monitor.setTextColor(1)
+    elseif (powerStats.energyStored < minStorage) then
+        R:SetAllControlRods(0)
+        -- monitor.setCursorPos(16,4)
+        -- monitor.setTextColor(8192)
+        -- monitor.write("Generating  ")
+        -- monitor.setTextColor(1)
     end
     sleep(5)
 end
